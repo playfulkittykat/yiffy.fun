@@ -8,7 +8,7 @@ use rs621::post::{Post, PostFileExtension, Query};
 
 use std::sync::Arc;
 
-use tokio::sync::Mutex;
+use futures::lock::Mutex;
 
 #[derive(Debug, Clone)]
 struct Search {
@@ -18,8 +18,11 @@ struct Search {
 
 impl Search {
     pub fn new<Q: Into<Query>>(yiff: Yiff, query: Q) -> Self {
+        let query = query.into();
+        let search = yiff.search(query);
+
         Search {
-            search: Arc::new(Mutex::new(yiff.search(query))),
+            search: Arc::new(Mutex::new(search)),
             yiff,
         }
     }
@@ -38,16 +41,13 @@ impl Credentials {
     }
 
     async fn load() -> Self {
-        tokio::task::spawn_blocking(|| Self::store().get("credentials").unwrap_or_default())
-            .await
-            .unwrap_or_default()
+        // TODO: Find a spawn_blocking replacement.
+        Self::store().get("credentials").unwrap_or_default()
     }
 
     async fn save(self) {
-        tokio::task::spawn_blocking(move || Self::store().set("credentials", &self))
-            .await
-            .unwrap()
-            .unwrap()
+        // TODO: Find a spawn_blocking replacement.
+        Self::store().set("credentials", &self).unwrap()
     }
 }
 
@@ -114,39 +114,56 @@ fn search<'a>(cx: Scope, query: &'a UseState<String>) -> Element {
 #[inline_props]
 fn login<'a>(cx: Scope, credentials: &'a UseState<Credentials>) -> Element {
     cx.render(rsx! {
-        form {
-            prevent_default: "onsubmit",
-            onsubmit: move |_| {
-                let mut creds = credentials.make_mut();
-                creds.active = true;
-                cx.spawn_forever(creds.clone().save());
-            },
+        style { [include_str!("login.css")] }
 
-            label {
-                "Username:"
-                input {
-                    "type": "text",
-                    value: "{credentials.username}",
-                    oninput: move |evt| {
-                        credentials.make_mut().username = evt.value.clone();
+        div {
+            style: "display: inline-block; width: min-content;",
+
+            form {
+                prevent_default: "onsubmit",
+                onsubmit: move |_| {
+                    let mut creds = credentials.make_mut();
+                    creds.active = true;
+                    cx.spawn_forever(creds.clone().save());
+                },
+
+                label {
+                    "Username:"
+                    input {
+                        "type": "text",
+                        value: "{credentials.username}",
+                        oninput: move |evt| {
+                            credentials.make_mut().username = evt.value.clone();
+                        }
                     }
+                }
+
+                label {
+                    "API Key:"
+                    input {
+                        "type": "password",
+                        value: "{credentials.api_key}",
+                        minlength: "24",
+                        oninput: move |evt| {
+                            credentials.make_mut().api_key = evt.value.clone();
+                        }
+                    }
+                }
+
+                button {
+                    "type": "submit",
+                    "Log In",
                 }
             }
 
-            label {
-                "API Key:"
-                input {
-                    "type": "password",
-                    value: "{credentials.api_key}",
-                    oninput: move |evt| {
-                        credentials.make_mut().api_key = evt.value.clone();
-                    }
-                }
-            }
+            div {
+                class: "help",
 
-            button {
-                "type": "submit",
-                "Log In",
+                "Your API Key is ",
+                strong { "not" },
+                " your password. You can find your API Key under ",
+                strong { "Account > Manage API Access" },
+                " once logged into e621.",
             }
         }
     })
@@ -169,8 +186,12 @@ fn viewer<'a>(
         (credentials.clone(), query.clone()),
         |(creds, query)| async move {
             // let yiff = Yiff::new("https://e926.net", "pkk@tabby.rocks");
-            let yiff = Yiff::new("https://e621.net", "pkk@tabby.rocks");
-            yiff.login(&creds.username, &creds.api_key).await;
+            let yiff = Yiff::new(
+                "https://e621.net",
+                "pkk@tabby.rocks",
+                &creds.username,
+                &creds.api_key,
+            );
 
             let faved = format!("-favoritedby:{}", creds.username);
 
@@ -283,18 +304,10 @@ fn viewer<'a>(
             let clone = fav_search_clone.clone();
             let clone2 = fav_search_clone.clone();
             cx.spawn_forever(async move {
-                clone
-                    .yiff
-                    .vote_up(post_id)
-                    .await
-                    .ok();
+                clone.yiff.vote_up(post_id).await.ok();
             });
             cx.spawn_forever(async move {
-                clone2
-                    .yiff
-                    .favorite(post_id)
-                    .await
-                    .unwrap();
+                clone2.yiff.favorite(post_id).await.unwrap();
             });
         }
         advance.restart()
@@ -308,11 +321,7 @@ fn viewer<'a>(
             let post_id = post.id;
             let clone = like_search_clone.clone();
             cx.spawn_forever(async move {
-                clone
-                    .yiff
-                    .vote_up(post_id)
-                    .await
-                    .ok();
+                clone.yiff.vote_up(post_id).await.ok();
             });
         }
         advance.restart()
@@ -326,11 +335,7 @@ fn viewer<'a>(
             let post_id = post.id;
             let clone = dislike_search_clone.clone();
             cx.spawn_forever(async move {
-                clone
-                    .yiff
-                    .vote_down(post_id)
-                    .await
-                    .ok();
+                clone.yiff.vote_down(post_id).await.ok();
             });
         }
         advance.restart()

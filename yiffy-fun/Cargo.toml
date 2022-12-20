@@ -7,17 +7,20 @@ edition = "2021"
 
 [features]
 default = [ "desktop" ]
-desktop = [ "dioxus/desktop" ]
-web = [ "dioxus/web" ]
+desktop = [ "dioxus/desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt" ]
+web = [ "dioxus/web", "wasm-bindgen-futures" ]
 
 [dependencies]
 bevy_pkv = { version = "0.6.0", default-features = false }
-dioxus = "0.2.4"
+dioxus = { version = "0.2.4", features = [ "web" ] }
 futures = "0.3.25"
 serde = { version = "1.0.151", features = [ "derive" ] }
-tokio = { version = "1.23.0", features = [ "rt", "sync" ] }
 url = "2.3.1"
+reqwest = { optional = true, default-features = false, version = "0.11.13" }
+wasm-bindgen-futures = { optional = true, version = "0.4.33" }
+tokio = { optional = true, version = "1" }
 
 [dependencies.rs621]
+default-features = false
 git = "https://github.com/playfulkittykat/rs621"
 branch = "posts"

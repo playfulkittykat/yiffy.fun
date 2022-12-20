@@ -1,4 +1,8 @@
+use crate::platform::spawn;
+
+use futures::channel::{mpsc, oneshot};
 use futures::stream::StreamExt;
+use futures::SinkExt;
 
 use rs621::client::Client;
 use rs621::error::Error;
@@ -7,19 +11,19 @@ use rs621::post::{Post, Query, VoteDir, VoteMethod};
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use tokio::sync::RwLock;
-use tokio::sync::{mpsc, oneshot};
-use tokio::task::JoinHandle;
-
 #[derive(Clone, Debug)]
 pub struct Yiff {
-    client: Arc<RwLock<Client>>,
+    client: Arc<Client>,
 }
 
 impl Yiff {
-    pub fn new(base_url: &str, creator: &str) -> Self {
+    pub fn new<U, K>(base_url: &str, creator: &str, username: U, api_key: K) -> Self
+    where
+        U: Into<String>,
+        K: Into<String>,
+    {
         // TODO: When in a browser, set the `_client` query parameter.
-        let client = Client::new(
+        let mut client = Client::new(
             base_url,
             format!(
                 "{}/{} (by {})",
@@ -30,20 +34,11 @@ impl Yiff {
         )
         .unwrap();
 
-        Self {
-            client: Arc::new(RwLock::new(client)),
-        }
-    }
+        client.login(username.into(), api_key.into());
 
-    pub async fn login<U, K>(&self, username: U, api_key: K)
-    where
-        U: Into<String>,
-        K: Into<String>,
-    {
-        self.client
-            .write()
-            .await
-            .login(username.into(), api_key.into());
+        Self {
+            client: Arc::new(client),
+        }
     }
 
     pub fn search<T>(&self, query: T) -> Search
@@ -55,14 +50,13 @@ impl Yiff {
         let (sender, mut receiver) =
             mpsc::channel::<(Msg, oneshot::Sender<Option<Result<Arc<Post>, Error>>>)>(5);
 
-        let handle = tokio::spawn(async move {
-            let guard = client.read().await;
-            let mut search = guard.post_search(query);
+        let background = async move {
+            let mut search = client.post_search(query);
 
             let mut history = VecDeque::<Arc<Post>>::new();
             let mut index = 0;
 
-            while let Some((msg, reply)) = receiver.recv().await {
+            while let Some((msg, reply)) = receiver.next().await {
                 let post = match msg {
                     Msg::Rewind if history.is_empty() => None,
                     Msg::Rewind if index == 0 => None,
@@ -100,27 +94,19 @@ impl Yiff {
                     break;
                 }
             }
-        });
+        };
 
-        Search {
-            sender,
-            handle: Some(handle),
-        }
+        spawn(background);
+
+        Search { sender }
     }
 
     pub async fn favorite(&self, post_id: u64) -> Result<(), Error> {
-        self.client
-            .read()
-            .await
-            .post_favorite(post_id)
-            .await
-            .map(|_| ())
+        self.client.post_favorite(post_id).await.map(|_| ())
     }
 
     pub async fn vote_up(&self, post_id: u64) -> Result<(), Error> {
         self.client
-            .read()
-            .await
             .post_vote(post_id, VoteMethod::Set, VoteDir::Up)
             .await
             .map(|_| ())
@@ -128,8 +114,6 @@ impl Yiff {
 
     pub async fn vote_down(&self, post_id: u64) -> Result<(), Error> {
         self.client
-            .read()
-            .await
             .post_vote(post_id, VoteMethod::Set, VoteDir::Down)
             .await
             .map(|_| ())
@@ -145,7 +129,6 @@ enum Msg {
 
 #[derive(Debug)]
 pub struct Search {
-    handle: Option<JoinHandle<()>>,
     sender: mpsc::Sender<(Msg, oneshot::Sender<Option<Result<Arc<Post>, Error>>>)>,
 }
 
@@ -154,14 +137,6 @@ impl Search {
         let (sender, receiver) = oneshot::channel();
 
         if let Err(_) = self.sender.send((msg, sender)).await {
-            if let Some(handle) = self.handle.take() {
-                if let Err(e) = handle.await {
-                    if let Ok(reason) = e.try_into_panic() {
-                        std::panic::resume_unwind(reason);
-                    }
-                }
-            }
-
             return None;
         }
 
