@@ -1,4 +1,39 @@
-[workspace]
-members = [
-    "yiffy-fun",
+[package]
+name = "yiffy-fun"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/playfulkittykat/yiffy.fun"
+include = [
+    "/.git",
+    "/src/",
+    "/build.rs",
+    "/index.html",
+    "/LICENSE.md",
 ]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = [ "desktop" ]
+desktop = [ "dioxus/desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt" ]
+web = [ "dioxus/web", "wasm-bindgen-futures" ]
+
+[dependencies]
+bevy_pkv = { version = "0.6.0", default-features = false }
+dioxus = { version = "0.2.4", features = [ "web" ] }
+futures = "0.3.25"
+serde = { version = "1.0.151", features = [ "derive" ] }
+url = "2.3.1"
+reqwest = { optional = true, default-features = false, version = "0.11.13" }
+wasm-bindgen-futures = { optional = true, version = "0.4.33" }
+tokio = { optional = true, version = "1" }
+webbrowser = "0.8.2"
+
+[dependencies.rs621]
+default-features = false
+git = "https://github.com/playfulkittykat/rs621"
+branch = "posts"
+
+[build-dependencies]
+vergen = { version = "7.4.4", default-features = false, features = [ "git" ] }
