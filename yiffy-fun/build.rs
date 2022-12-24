@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate::app::app;
-
-use std::future::Future;
-
-pub(crate) fn spawn<F>(fut: F)
-where
-    F: Future<Output = ()> + 'static,
-{
-    wasm_bindgen_futures::spawn_local(fut);
-}
-
-pub(super) fn main() {
-    dioxus::web::launch(app);
+fn main() {
+    vergen::vergen(Default::default()).unwrap();
 }

@@ -1,3 +1,21 @@
+/*
+ * Yiffy.Fun
+ *
+ * Copyright (C) 2022 Playful KittyKat
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 use bevy_pkv::PkvStore;
 
 use crate::yiff::Yiff;
@@ -9,6 +27,10 @@ use rs621::post::{Post, PostFileExtension, Query};
 use std::sync::Arc;
 
 use futures::lock::Mutex;
+
+use url::Url;
+
+use webbrowser;
 
 #[derive(Debug, Clone)]
 struct Search {
@@ -63,6 +85,7 @@ pub(crate) fn app(cx: Scope) -> Element {
             login(
                 credentials: credentials
             )
+            notice()
         });
     }
 
@@ -78,6 +101,7 @@ pub(crate) fn app(cx: Scope) -> Element {
                 },
                 "Log Out",
             }
+            notice()
         });
     }
 
@@ -86,6 +110,39 @@ pub(crate) fn app(cx: Scope) -> Element {
             credentials: credentials,
             query: query,
         )
+    })
+}
+
+fn notice(cx: Scope) -> Element {
+    let year = &env!("VERGEN_GIT_COMMIT_TIMESTAMP")[..4];
+    let source = Url::parse(concat!(env!("CARGO_PKG_REPOSITORY"), "/"))
+        .unwrap()
+        .join("commit/")
+        .unwrap()
+        .join(env!("VERGEN_GIT_SHA"))
+        .unwrap();
+
+    let href = source.clone();
+
+    let license = env!("CARGO_PKG_LICENSE");
+
+    cx.render(rsx! {
+        footer {
+            class: "copyright",
+
+            style { [include_str!("notice.css")] },
+            "Copyright {year}. "
+            "Available under the terms of {license}. "
+            a {
+                prevent_default: "onclick",
+                onclick: move |_| { webbrowser::open(source.as_str()).ok(); },
+                href: "{href}",
+                target: "_blank",
+                "Source available"
+            }
+
+            "."
+        }
     })
 }
 
