@@ -145,6 +145,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "base64"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
+
+[[package]]
 name = "bevy_ecs"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2363,7 +2369,7 @@ version = "0.11.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68cc60575865c7831548863cc02356512e3f1dc2f3f82cb837d7fc4cc8f3c97c"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -2419,7 +2425,7 @@ dependencies = [
 [[package]]
 name = "rs621"
 version = "0.7.0-alpha1"
-source = "git+https://github.com/playfulkittykat/rs621?branch=posts#0d01b2c37921e3e983863684eac2cd0ff1bcf438"
+source = "git+https://github.com/nasso/rs621?branch=master#8f332bb80df8044b2920c501633bd285866b82b9"
 dependencies = [
  "chrono",
  "derivative",
@@ -3618,9 +3624,11 @@ dependencies = [
 name = "yiffy-fun"
 version = "0.1.0"
 dependencies = [
+ "base64 0.20.0",
  "bevy_pkv",
  "dioxus",
  "futures",
+ "lazy_static",
  "reqwest",
  "rs621",
  "serde",

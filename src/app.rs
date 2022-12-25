@@ -32,6 +32,15 @@ use url::Url;
 
 use webbrowser;
 
+const BASE_URL: &str = "https://e621.net";
+
+lazy_static::lazy_static! {
+    static ref LOGO_E621: String = format!(
+        "data:image/svg+xml;base64,{}",
+        base64::encode(include_bytes!("e621.svg")),
+    );
+}
+
 #[derive(Debug, Clone)]
 struct Search {
     search: Arc<Mutex<crate::yiff::Search>>,
@@ -74,6 +83,18 @@ impl Credentials {
 }
 
 pub(crate) fn app(cx: Scope) -> Element {
+    // Prevent scrolling with keyboard:
+    use_eval(&cx)(
+        r##"window.addEventListener(
+        'keydown',
+        (e) => {
+            if (e.target.matches("#viewport-wrapper, #viewport-wrapper *")) {
+                e.preventDefault()
+            }
+        }
+    )"##,
+    );
+
     let credentials = use_future(&cx, (), |_| Credentials::load());
     let credentials = credentials.value()?;
     let credentials = use_state(&cx, || credentials.clone());
@@ -95,6 +116,7 @@ pub(crate) fn app(cx: Scope) -> Element {
                 query: query
             )
             button {
+                tabindex: "-1",
                 onclick: move |_| {
                     credentials.set(Default::default());
                     cx.spawn_forever(Credentials::default().save());
@@ -113,6 +135,19 @@ pub(crate) fn app(cx: Scope) -> Element {
     })
 }
 
+#[inline_props]
+fn external_link<'a>(cx: Scope<'a>, href: Url, children: Element<'a>) -> Element {
+    cx.render(rsx! {
+        a {
+            prevent_default: "onclick",
+            onclick: move |_| { webbrowser::open(href.as_str()).ok(); },
+            href: "{href}",
+            target: "_blank",
+            children
+        }
+    })
+}
+
 fn notice(cx: Scope) -> Element {
     let year = &env!("VERGEN_GIT_COMMIT_TIMESTAMP")[..4];
     let source = Url::parse(concat!(env!("CARGO_PKG_REPOSITORY"), "/"))
@@ -121,8 +156,6 @@ fn notice(cx: Scope) -> Element {
         .unwrap()
         .join(env!("VERGEN_GIT_SHA"))
         .unwrap();
-
-    let href = source.clone();
 
     let license = env!("CARGO_PKG_LICENSE");
 
@@ -133,14 +166,10 @@ fn notice(cx: Scope) -> Element {
             style { [include_str!("notice.css")] },
             "Copyright {year}. "
             "Available under the terms of {license}. "
-            a {
-                prevent_default: "onclick",
-                onclick: move |_| { webbrowser::open(source.as_str()).ok(); },
-                href: "{href}",
-                target: "_blank",
-                "Source available"
-            }
-
+            external_link(
+                href: source,
+                "Source available",
+            )
             "."
         }
     })
@@ -243,12 +272,7 @@ fn viewer<'a>(
         (credentials.clone(), query.clone()),
         |(creds, query)| async move {
             // let yiff = Yiff::new("https://e926.net", "pkk@tabby.rocks");
-            let yiff = Yiff::new(
-                "https://e621.net",
-                "pkk@tabby.rocks",
-                &creds.username,
-                &creds.api_key,
-            );
+            let yiff = Yiff::new(BASE_URL, "pkk@tabby.rocks", &creds.username, &creds.api_key);
 
             let faved = format!("-favoritedby:{}", creds.username);
 
@@ -320,6 +344,8 @@ fn viewer<'a>(
     let dislike_current_clone = current.clone();
 
     let viewer_current_clone = current.clone();
+
+    let sources_current_clone = current.clone();
 
     let viewer = match current.as_ref().map(|c| &c.file.ext) {
         Some(PostFileExtension::WebM) => rsx! {
@@ -426,6 +452,8 @@ fn viewer<'a>(
     });
     let rewind_clone = rewind.clone();
 
+    let logo_e621 = LOGO_E621.as_str();
+
     cx.render(rsx! (
         style { [include_str!("viewer.css")] }
         link {
@@ -435,13 +463,17 @@ fn viewer<'a>(
         }
         div {
             prevent_default: "onkeyup",
-            onkeyup: move |evt| match evt.data.key.as_str() {
-                "ArrowUp" => like_clone(),
-                "ArrowDown" => dislike_clone(),
-                "ArrowLeft" => rewind_clone(),
-                " " | "Spacebar" => fav_clone(),
-                _ => (),
+            onkeyup: move |evt| {
+                evt.cancel_bubble();
+                match evt.data.key.as_str() {
+                    "ArrowUp" => like_clone(),
+                    "ArrowDown" => dislike_clone(),
+                    "ArrowLeft" => rewind_clone(),
+                    " " | "Spacebar" => fav_clone(),
+                    _ => (),
+                }
             },
+            id: "viewport-wrapper",
             tabindex: "0",
             "autofocus": "true",
             style: "width: 100%; overflow-x: hidden;",
@@ -455,6 +487,7 @@ fn viewer<'a>(
                     li {
                         button {
                             onclick: move |_| fav(),
+                            tabindex: "-1",
                             disabled: "{disabled}",
                             title: "favorite",
                             div {
@@ -467,6 +500,7 @@ fn viewer<'a>(
                     li {
                         button {
                             onclick: move |_| like(),
+                            tabindex: "-1",
                             disabled: "{disabled}",
                             title: "like",
                             div {
@@ -479,6 +513,7 @@ fn viewer<'a>(
                     li {
                         button {
                             onclick: move |_| dislike(),
+                            tabindex: "-1",
                             title: "dislike",
                             disabled: "{disabled}",
                             div {
@@ -491,6 +526,7 @@ fn viewer<'a>(
                     li {
                         button {
                             onclick: move |_| rewind(),
+                            tabindex: "-1",
                             title: "rewind",
                             disabled: "{disabled}",
                             div {
@@ -508,6 +544,7 @@ fn viewer<'a>(
                 ul {
                     li {
                         button {
+                            tabindex: "-1",
                             onclick: move |_| query.set(String::new()),
                             "❌",
                         }
@@ -515,6 +552,53 @@ fn viewer<'a>(
                 }
             }
 
+            div {
+                class: "details",
+
+                ul {
+                    class: "sources",
+
+                    sources_current_clone
+                        .iter()
+                        .map(|post| rsx! {
+                            li {
+                                external_link(
+                                    href: Url::parse(&format!(
+                                        "{}/posts/{}",
+                                        BASE_URL,
+                                        post.id
+                                    )).unwrap(),
+
+                                    img {
+                                        src: "{logo_e621}",
+                                        alt: "e621 logo",
+                                    }
+                                )
+                            }
+                        }),
+                }
+
+                ul {
+                    class: "other-sources",
+
+                    sources_current_clone
+                        .iter()
+                        .flat_map(|post| &post.sources)
+                        .filter_map(|source| {
+                            let href = Url::parse(source).ok()?;
+                            let host = href.host_str()?.to_string();
+                            let result = rsx! {
+                                li {
+                                    external_link(
+                                        href: href,
+                                        "{host}"
+                                    )
+                                }
+                            };
+                            Some(result)
+                        })
+                }
+            }
         }
     ))
 }

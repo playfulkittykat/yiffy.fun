@@ -29,11 +29,13 @@ reqwest = { optional = true, default-features = false, version = "0.11.13" }
 wasm-bindgen-futures = { optional = true, version = "0.4.33" }
 tokio = { optional = true, version = "1" }
 webbrowser = "0.8.2"
+base64 = "0.20.0"
+lazy_static = "1.4.0"
 
 [dependencies.rs621]
 default-features = false
-git = "https://github.com/playfulkittykat/rs621"
-branch = "posts"
+git = "https://github.com/nasso/rs621"
+branch = "master"
 
 [build-dependencies]
 vergen = { version = "7.4.4", default-features = false, features = [ "git" ] }
