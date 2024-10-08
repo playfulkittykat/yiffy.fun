@@ -1,7 +1,7 @@
 /*
  * Yiffy.Fun
  *
- * Copyright (C) 2022 Playful KittyKat
+ * Copyright (C) 2022,2024 Playful KittyKat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@ use bevy_pkv::PkvStore;
 use crate::yiff::Yiff;
 
 use dioxus::prelude::*;
+use keyboard_types::Key;
 
 use rs621::post::{Post, PostFileExtension, Query};
 
@@ -30,7 +31,11 @@ use futures::lock::Mutex;
 
 use url::Url;
 
-use webbrowser;
+#[cfg(feature = "desktop")]
+use dioxus_desktop::use_eval;
+
+#[cfg(feature = "web")]
+use dioxus_web::use_eval;
 
 const BASE_URL: &str = "https://e621.net";
 
@@ -84,7 +89,7 @@ impl Credentials {
 
 pub(crate) fn app(cx: Scope) -> Element {
     // Prevent scrolling with keyboard:
-    use_eval(&cx)(
+    use_eval(cx)(
         r##"window.addEventListener(
         'keydown',
         (e) => {
@@ -92,10 +97,11 @@ pub(crate) fn app(cx: Scope) -> Element {
                 e.preventDefault()
             }
         }
-    )"##,
+    )"##
+        .to_owned(),
     );
 
-    let credentials = use_future(&cx, (), |_| Credentials::load());
+    let credentials = use_future(cx, (), |_| Credentials::load());
     let credentials = credentials.value()?;
     let credentials = use_state(&cx, || credentials.clone());
 
@@ -103,18 +109,14 @@ pub(crate) fn app(cx: Scope) -> Element {
 
     if !credentials.active {
         return cx.render(rsx! {
-            login(
-                credentials: credentials
-            )
-            notice()
+            crate::app::login { credentials: credentials }
+            crate::app::notice {}
         });
     }
 
     if query.is_empty() {
         return cx.render(rsx! {
-            search(
-                query: query
-            )
+            crate::app::search { query: query }
             button {
                 tabindex: "-1",
                 onclick: move |_| {
@@ -123,15 +125,15 @@ pub(crate) fn app(cx: Scope) -> Element {
                 },
                 "Log Out",
             }
-            notice()
+            crate::app::notice {}
         });
     }
 
     cx.render(rsx! {
-        viewer(
+        crate::app::viewer {
             credentials: credentials,
             query: query,
-        )
+        }
     })
 }
 
@@ -163,13 +165,10 @@ fn notice(cx: Scope) -> Element {
         footer {
             class: "copyright",
 
-            style { [include_str!("notice.css")] },
+            style { include_str!("notice.css") },
             "Copyright {year}. "
             "Available under the terms of {license}. "
-            external_link(
-                href: source,
-                "Source available",
-            )
+            crate::app::external_link { href: source, "Source available" }
             "."
         }
     })
@@ -200,7 +199,7 @@ fn search<'a>(cx: Scope, query: &'a UseState<String>) -> Element {
 #[inline_props]
 fn login<'a>(cx: Scope, credentials: &'a UseState<Credentials>) -> Element {
     cx.render(rsx! {
-        style { [include_str!("login.css")] }
+        style { include_str!("login.css") }
 
         div {
             style: "display: inline-block; width: min-content;",
@@ -269,7 +268,7 @@ fn viewer<'a>(
 ) -> Element {
     let search = use_future(
         &cx,
-        (credentials.clone(), query.clone()),
+        (&(*credentials).clone(), &(*query).clone()),
         |(creds, query)| async move {
             // let yiff = Yiff::new("https://e926.net", "pkk@tabby.rocks");
             let yiff = Yiff::new(BASE_URL, "pkk@tabby.rocks", &creds.username, &creds.api_key);
@@ -455,7 +454,7 @@ fn viewer<'a>(
     let logo_e621 = LOGO_E621.as_str();
 
     cx.render(rsx! (
-        style { [include_str!("viewer.css")] }
+        style { include_str!("viewer.css") }
         link {
             rel: "preload",
             href: "{preload.href}",
@@ -464,12 +463,12 @@ fn viewer<'a>(
         div {
             prevent_default: "onkeyup",
             onkeyup: move |evt| {
-                evt.cancel_bubble();
-                match evt.data.key.as_str() {
-                    "ArrowUp" => like_clone(),
-                    "ArrowDown" => dislike_clone(),
-                    "ArrowLeft" => rewind_clone(),
-                    " " | "Spacebar" => fav_clone(),
+                evt.stop_propagation();
+                match evt.data.key() {
+                    Key::ArrowUp => like_clone(),
+                    Key::ArrowDown => dislike_clone(),
+                    Key::ArrowLeft => rewind_clone(),
+                    Key::Character(c) if c == " " => fav_clone(),
                     _ => (),
                 }
             },
@@ -562,8 +561,7 @@ fn viewer<'a>(
                         .iter()
                         .map(|post| rsx! {
                             li {
-                                external_link(
-                                    href: Url::parse(&format!(
+                                external_link{href:Url::parse(&format!(
                                         "{}/posts/{}",
                                         BASE_URL,
                                         post.id
@@ -573,7 +571,7 @@ fn viewer<'a>(
                                         src: "{logo_e621}",
                                         alt: "e621 logo",
                                     }
-                                )
+                                }
                             }
                         }),
                 }
@@ -589,10 +587,10 @@ fn viewer<'a>(
                             let host = href.host_str()?.to_string();
                             let result = rsx! {
                                 li {
-                                    external_link(
+                                    external_link{
                                         href: href,
                                         "{host}"
-                                    )
+                                    }
                                 }
                             };
                             Some(result)

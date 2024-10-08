@@ -28,5 +28,5 @@ where
 }
 
 pub(super) fn main() {
-    dioxus::desktop::launch(app);
+    dioxus_desktop::launch(app);
 }
