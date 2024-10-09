@@ -478,10 +478,10 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Eleme
             onkeyup: move |evt| {
                 evt.stop_propagation();
                 match evt.data.key() {
-                    Key::ArrowUp => like_clone.borrow_mut()(),
+                    Key::ArrowRight => like_clone.borrow_mut()(),
                     Key::ArrowDown => dislike_clone.borrow_mut()(),
                     Key::ArrowLeft => rewind_clone.borrow_mut()(),
-                    Key::Character(c) if c == " " => fav_clone.borrow_mut()(),
+                    Key::ArrowUp => fav_clone.borrow_mut()(),
                     _ => {}
                 }
             },
@@ -498,7 +498,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Eleme
                             tabindex: "-1",
                             disabled: "{disabled}",
                             title: "favorite",
-                            div { class: "shortcut", "(space)" }
+                            div { class: "shortcut", "(⬆)" }
                             "❤️"
                         }
                     }
@@ -508,7 +508,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Eleme
                             tabindex: "-1",
                             disabled: "{disabled}",
                             title: "like",
-                            div { class: "shortcut", "(⬆)" }
+                            div { class: "shortcut", "(➡)" }
                             "👍"
                         }
                     }
