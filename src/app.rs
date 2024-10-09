@@ -285,7 +285,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<String>) -> Element {
 
     let search = match &*search.read_unchecked() {
         Some(s) => s.clone(),
-        None => return rsx! {  },
+        None => return rsx! { "Searching..." },
     };
 
     let mut disabled = use_signal(|| false);
