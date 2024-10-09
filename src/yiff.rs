@@ -1,7 +1,7 @@
 /*
  * Yiffy.Fun
  *
- * Copyright (C) 2022 Playful KittyKat
+ * Copyright (C) 2022,2024 Playful KittyKat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -65,8 +65,7 @@ impl Yiff {
     {
         let query = query.into();
         let client = self.client.clone();
-        let (sender, mut receiver) =
-            mpsc::channel::<(Msg, oneshot::Sender<Option<Result<Arc<Post>, Error>>>)>(5);
+        let (sender, mut receiver) = mpsc::channel::<Envelope>(5);
 
         let background = async move {
             let mut search = client.post_search(query);
@@ -74,7 +73,7 @@ impl Yiff {
             let mut history = VecDeque::<Arc<Post>>::new();
             let mut index = 0;
 
-            while let Some((msg, reply)) = receiver.next().await {
+            while let Some(Envelope { msg, reply }) = receiver.next().await {
                 let post = match msg {
                     Msg::Rewind if history.is_empty() => None,
                     Msg::Rewind if index == 0 => None,
@@ -108,7 +107,7 @@ impl Yiff {
                     }
                 }
 
-                if let Err(_) = reply.send(post) {
+                if reply.send(post).is_err() {
                     break;
                 }
             }
@@ -146,15 +145,21 @@ enum Msg {
 }
 
 #[derive(Debug)]
+struct Envelope {
+    msg: Msg,
+    reply: oneshot::Sender<Option<Result<Arc<Post>, Error>>>,
+}
+
+#[derive(Debug)]
 pub struct Search {
-    sender: mpsc::Sender<(Msg, oneshot::Sender<Option<Result<Arc<Post>, Error>>>)>,
+    sender: mpsc::Sender<Envelope>,
 }
 
 impl Search {
     async fn fetch(&mut self, msg: Msg) -> Option<Result<Arc<Post>, Error>> {
-        let (sender, receiver) = oneshot::channel();
+        let (reply, receiver) = oneshot::channel();
 
-        if let Err(_) = self.sender.send((msg, sender)).await {
+        if self.sender.send(Envelope { msg, reply }).await.is_err() {
             return None;
         }
 

@@ -16,12 +16,12 @@ include = [
 
 [features]
 default = [ "desktop" ]
-desktop = [ "dioxus-desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt" ]
-web = [ "dioxus-web", "wasm-bindgen-futures" ]
+desktop = [ "dioxus/desktop", "dioxus-desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt" ]
+web = [ "dioxus/web", "dioxus-web", "wasm-bindgen-futures" ]
 
 [dependencies]
 bevy_pkv = { version = "0.6.0", default-features = false }
-dioxus = { version = "0.3" }
+dioxus = { version = "0.5" }
 futures = "0.3.25"
 serde = { version = "1.0.151", features = [ "derive" ] }
 url = "2.3.1"
@@ -31,14 +31,14 @@ tokio = { optional = true, version = "1" }
 webbrowser = "0.8.2"
 base64 = "0.20.0"
 lazy_static = "1.4.0"
-dioxus-desktop = { version = "0.3", optional = true }
-dioxus-web = { version = "0.3", optional = true }
-keyboard-types = { version = "0.6.2", default-features = false }
+dioxus-desktop = { version = "0.5", optional = true }
+dioxus-web = { version = "0.5", optional = true }
+keyboard-types = { version = "0.7.0", default-features = false }
 
 [dependencies.rs621]
 default-features = false
 git = "https://github.com/nasso/rs621"
-branch = "master"
+rev = "6b9abc6eb94f06afa30e782de6e828ba53811168"
 
 [build-dependencies]
 vergen = { version = "7.4.4", default-features = false, features = [ "git" ] }
