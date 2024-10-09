@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use base64::prelude::*;
 use base64::engine::general_purpose::STANDARD;
+use base64::prelude::*;
 
 use bevy_pkv::PkvStore;
 

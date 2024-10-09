@@ -1,7 +1,7 @@
 /*
  * Yiffy.Fun
  *
- * Copyright (C) 2022 Playful KittyKat
+ * Copyright (C) 2022,2024 Playful KittyKat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,6 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-fn main() {
-    vergen::vergen(Default::default()).unwrap();
+
+use vergen_gix::{Emitter, GixBuilder};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let gitcl = GixBuilder::default()
+        .commit_timestamp(true)
+        .sha(true)
+        .build()?;
+    Emitter::default().add_instructions(&gitcl)?.emit()?;
+    Ok(())
 }

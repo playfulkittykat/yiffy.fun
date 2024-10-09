@@ -30,7 +30,7 @@ wasm-bindgen-futures = { optional = true, version = "0.4.43" }
 tokio = { optional = true, version = "1" }
 webbrowser = "1.0.2"
 base64 = "0.22.0"
-lazy_static = "1.4.0"
+lazy_static = "1.5.0"
 dioxus-desktop = { version = "0.5", optional = true }
 dioxus-web = { version = "0.5", optional = true }
 keyboard-types = { version = "0.7.0", default-features = false }
@@ -41,4 +41,4 @@ git = "https://github.com/nasso/rs621"
 rev = "6b9abc6eb94f06afa30e782de6e828ba53811168"
 
 [build-dependencies]
-vergen = { version = "7.4.4", default-features = false, features = [ "git" ] }
+vergen-gix = { version = "1.0.2", default-features = false }
