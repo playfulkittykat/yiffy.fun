@@ -26,9 +26,9 @@ futures = "0.3.31"
 serde = { version = "1.0.210", features = [ "derive" ] }
 url = "2.5.2"
 reqwest = { optional = true, default-features = false, version = "0.11.13" }
-wasm-bindgen-futures = { optional = true, version = "0.4.33" }
+wasm-bindgen-futures = { optional = true, version = "0.4.43" }
 tokio = { optional = true, version = "1" }
-webbrowser = "0.8.2"
+webbrowser = "1.0.2"
 base64 = "0.20.0"
 lazy_static = "1.4.0"
 dioxus-desktop = { version = "0.5", optional = true }
