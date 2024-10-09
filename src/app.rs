@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use base64::prelude::*;
+use base64::engine::general_purpose::STANDARD;
+
 use bevy_pkv::PkvStore;
 
 use crate::yiff::Yiff;
@@ -38,7 +41,7 @@ const BASE_URL: &str = "https://e621.net";
 lazy_static::lazy_static! {
     static ref LOGO_E621: String = format!(
         "data:image/svg+xml;base64,{}",
-        base64::encode(include_bytes!("e621.svg")),
+        STANDARD.encode(include_bytes!("e621.svg")),
     );
 }
 
