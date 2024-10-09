@@ -16,11 +16,11 @@ include = [
 
 [features]
 default = [ "desktop" ]
-desktop = [ "dioxus/desktop", "dioxus-desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt" ]
+desktop = [ "dioxus/desktop", "dioxus-desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "tokio/rt", "bevy_pkv/redb" ]
 web = [ "dioxus/web", "dioxus-web", "wasm-bindgen-futures" ]
 
 [dependencies]
-bevy_pkv = { version = "0.6.0", default-features = false }
+bevy_pkv = { version = "0.11.1", default-features = false }
 dioxus = { version = "0.5" }
 futures = "0.3.25"
 serde = { version = "1.0.151", features = [ "derive" ] }
