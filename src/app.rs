@@ -86,6 +86,12 @@ impl Credentials {
     }
 }
 
+#[derive(Debug, Default)]
+struct ActiveQuery {
+    terms: String,
+    active: bool,
+}
+
 pub(crate) fn app() -> Element {
     // Prevent scrolling with keyboard:
     use_future(|| {
@@ -108,7 +114,7 @@ pub(crate) fn app() -> Element {
         None => return rsx! { "Loading credentials..." },
     };
 
-    let query = use_signal(String::new);
+    let query = use_signal(ActiveQuery::default);
     let mut credentials_signal = use_signal(|| credentials.clone());
 
     if !credentials_signal.read().active {
@@ -119,7 +125,7 @@ pub(crate) fn app() -> Element {
     }
 
     match &*query.read_unchecked() {
-        q if q.is_empty() => rsx! {
+        q if !q.active => rsx! {
             crate::app::search { query }
             button {
                 tabindex: "-1",
@@ -178,18 +184,18 @@ fn notice() -> Element {
 }
 
 #[component]
-fn search(query: Signal<String>) -> Element {
-    let mut partial_query = use_signal(String::new);
-
+fn search(query: Signal<ActiveQuery>) -> Element {
     rsx! {
         form {
             prevent_default: "onsubmit",
-            onsubmit: move |_| query.set(partial_query.read().clone()),
+            onsubmit: move |_| {
+                query.write().active = true;
+            },
             input {
                 "type": "text",
-                value: "{partial_query}",
+                value: "{query.peek().terms}",
                 placeholder: "tags...",
-                oninput: move |evt| partial_query.set(evt.value().clone())
+                oninput: move |evt| query.write().terms = evt.value().clone()
             }
             button { "type": "submit", "Start" }
         }
@@ -257,7 +263,7 @@ struct Preload {
 }
 
 #[component]
-fn viewer(credentials: Signal<Credentials>, query: Signal<String>) -> Element {
+fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Element {
     let search = use_resource(move || async move {
         let creds = credentials.read();
         let query_ref = query.read();
@@ -267,7 +273,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<String>) -> Element {
         let faved = format!("-favoritedby:{}", creds.username);
 
         // TODO: Verify that this is how I should be splitting query terms.
-        let mut query_terms: Vec<_> = str::split(&query_ref, " ")
+        let mut query_terms: Vec<_> = str::split(&query_ref.terms, " ")
             .filter_map(|p| match p.trim() {
                 "" => None,
                 rest => Some(rest),
@@ -534,7 +540,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<String>) -> Element {
                     li {
                         button {
                             tabindex: "-1",
-                            onclick: move |_| *query.write() = String::new(),
+                            onclick: move |_| query.write().active = false,
                             "❌"
                         }
                     }
