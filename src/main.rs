@@ -1,7 +1,7 @@
 /*
  * Yiffy.Fun
  *
- * Copyright (C) 2022 Playful KittyKat
+ * Copyright (C) 2022,2024 Playful KittyKat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 mod app;
+mod timers;
 mod yiff;
 
 #[cfg(feature = "desktop")]
