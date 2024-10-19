@@ -122,6 +122,10 @@ impl Yiff {
         self.client.post_favorite(post_id).await.map(|_| ())
     }
 
+    pub async fn unfavorite(&self, post_id: u64) -> Result<(), Error> {
+        self.client.post_unfavorite(post_id).await
+    }
+
     pub async fn vote_up(&self, post_id: u64) -> Result<(), Error> {
         self.client
             .post_vote(post_id, VoteMethod::Set, VoteDir::Up)
