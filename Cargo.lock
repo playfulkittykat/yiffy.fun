@@ -858,6 +858,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -3065,6 +3066,7 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
+ "serde",
 ]
 
 [[package]]
@@ -3075,6 +3077,7 @@ checksum = "707907fe3c25f5424cce2cb7e1cbcafee6bdbe735ca90ef77c29e84591e5b9da"
 dependencies = [
  "equivalent",
  "hashbrown 0.15.0",
+ "serde",
 ]
 
 [[package]]
@@ -4406,7 +4409,7 @@ dependencies = [
 [[package]]
 name = "rs621"
 version = "0.7.0-alpha1"
-source = "git+https://github.com/nasso/rs621?rev=ef2d51596faebcd8546fb6de8a11a9f1dff4b74d#ef2d51596faebcd8546fb6de8a11a9f1dff4b74d"
+source = "git+https://github.com/playfulkittykat/rs621?rev=ef20e183533f76c244f138fb9eadeffb5ae723a0#ef20e183533f76c244f138fb9eadeffb5ae723a0"
 dependencies = [
  "chrono",
  "derivative",
@@ -4415,6 +4418,8 @@ dependencies = [
  "reqwest 0.11.27",
  "serde",
  "serde_json",
+ "serde_repr",
+ "serde_with",
  "thiserror",
  "tokio",
  "url",
@@ -4655,6 +4660,36 @@ dependencies = [
  "itoa 1.0.11",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_with"
+version = "3.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e28bdad6db2b8340e449f7108f020b3b092e8583a9e3fb82713e1d4e71fe817"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "hex",
+ "indexmap 1.9.3",
+ "indexmap 2.6.0",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_with_macros",
+ "time",
+]
+
+[[package]]
+name = "serde_with_macros"
+version = "3.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d846214a9854ef724f3da161b426242d8de7c1fc7de2f89bb1efcb154dca79d"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.79",
 ]
 
 [[package]]

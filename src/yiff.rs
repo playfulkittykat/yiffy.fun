@@ -20,11 +20,12 @@ use crate::platform::spawn;
 
 use futures::channel::{mpsc, oneshot};
 use futures::stream::StreamExt;
-use futures::SinkExt;
+use futures::{SinkExt, TryStreamExt};
 
 use rs621::client::Client;
 use rs621::error::Error;
 use rs621::post::{Post, Query, VoteDir, VoteMethod};
+use rs621::tag;
 
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -138,6 +139,23 @@ impl Yiff {
             .post_vote(post_id, VoteMethod::Set, VoteDir::Down)
             .await
             .map(|_| ())
+    }
+
+    pub async fn tags(&self, needle: String) -> Result<Vec<String>, Error> {
+        let query = tag::Query::new()
+            .fuzzy_name_matches(needle)
+            .order(tag::Order::Similarity)
+            .limit(30);
+
+        let tags = self
+            .client
+            .tag_search(query)
+            .take(30)
+            .map_ok(|t| t.name)
+            .try_collect::<Vec<_>>()
+            .await?;
+
+        Ok(tags)
     }
 }
 
