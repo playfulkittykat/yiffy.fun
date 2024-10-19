@@ -21,6 +21,7 @@ use base64::prelude::*;
 
 use bevy_pkv::PkvStore;
 
+use crate::tag;
 use crate::yiff::Yiff;
 
 use dioxus::prelude::*;
@@ -88,7 +89,7 @@ impl Credentials {
 
 #[derive(Debug, Default)]
 struct ActiveQuery {
-    terms: String,
+    terms: Vec<String>,
     active: bool,
 }
 
@@ -114,7 +115,7 @@ pub(crate) fn app() -> Element {
         None => return rsx! { "Loading credentials..." },
     };
 
-    let query = use_signal(ActiveQuery::default);
+    let mut query = use_signal(ActiveQuery::default);
     let mut credentials_signal = use_signal(|| credentials.clone());
 
     if !credentials_signal.read().active {
@@ -124,9 +125,23 @@ pub(crate) fn app() -> Element {
         };
     }
 
+    let yiff = use_signal(|| {
+        let creds = credentials_signal.read();
+        Yiff::new(BASE_URL, "pkk@tabby.rocks", &creds.username, &creds.api_key)
+    });
+
+    let entries = tag::Entries::new();
     match &*query.read_unchecked() {
         q if !q.active => rsx! {
-            crate::app::search { query }
+        tag::List {
+            entries,
+            yiff,
+            onsubmit: move |terms| {
+                let mut query = query.write();
+                query.terms = terms;
+                query.active = true;
+            }
+        }
             button {
                 tabindex: "-1",
                 onclick: move |_| {
@@ -138,7 +153,7 @@ pub(crate) fn app() -> Element {
             crate::app::notice {}
         },
         _ => rsx! {
-            crate::app::viewer { credentials: credentials_signal, query }
+            crate::app::viewer { yiff, credentials: credentials_signal, query }
         },
     }
 }
@@ -183,6 +198,7 @@ fn notice() -> Element {
     }
 }
 
+/*
 #[component]
 fn search(query: Signal<ActiveQuery>) -> Element {
     rsx! {
@@ -201,6 +217,7 @@ fn search(query: Signal<ActiveQuery>) -> Element {
         }
     }
 }
+*/
 
 #[component]
 fn login(credentials: Signal<Credentials>) -> Element {
@@ -263,22 +280,20 @@ struct Preload {
 }
 
 #[component]
-fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Element {
+fn viewer(
+    yiff: ReadOnlySignal<Yiff>,
+    credentials: Signal<Credentials>,
+    query: Signal<ActiveQuery>,
+) -> Element {
     let search = use_resource(move || async move {
         let creds = credentials.read();
         let query_ref = query.read();
         // let yiff = Yiff::new("https://e926.net", "pkk@tabby.rocks");
-        let yiff = Yiff::new(BASE_URL, "pkk@tabby.rocks", &creds.username, &creds.api_key);
 
         let faved = format!("-favoritedby:{}", creds.username);
 
         // TODO: Verify that this is how I should be splitting query terms.
-        let mut query_terms: Vec<_> = str::split(&query_ref.terms, " ")
-            .filter_map(|p| match p.trim() {
-                "" => None,
-                rest => Some(rest),
-            })
-            .collect();
+        let mut query_terms: Vec<_> = query_ref.terms.iter().map(String::as_str).collect();
 
         query_terms.push("order:random");
         query_terms.push("score:>=0");
@@ -286,6 +301,7 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Eleme
         query_terms.push("-type:swf");
         query_terms.push(&faved);
 
+        let yiff = yiff.read().clone();
         Search::new(yiff, query_terms.as_slice())
     });
 

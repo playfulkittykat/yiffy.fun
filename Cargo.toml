@@ -39,8 +39,8 @@ gloo = { optional = true, version = "0.11.0", default-features = false, features
 
 [dependencies.rs621]
 default-features = false
-git = "https://github.com/nasso/rs621"
-rev = "ef2d51596faebcd8546fb6de8a11a9f1dff4b74d"
+git = "https://github.com/playfulkittykat/rs621"
+rev = "ef20e183533f76c244f138fb9eadeffb5ae723a0"
 
 [build-dependencies]
 vergen-gix = { version = "1.0.2", default-features = false }
