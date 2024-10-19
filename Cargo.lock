@@ -4318,7 +4318,7 @@ dependencies = [
 [[package]]
 name = "rs621"
 version = "0.7.0-alpha1"
-source = "git+https://github.com/nasso/rs621?rev=6b9abc6eb94f06afa30e782de6e828ba53811168#6b9abc6eb94f06afa30e782de6e828ba53811168"
+source = "git+https://github.com/nasso/rs621?rev=ef2d51596faebcd8546fb6de8a11a9f1dff4b74d#ef2d51596faebcd8546fb6de8a11a9f1dff4b74d"
 dependencies = [
  "chrono",
  "derivative",

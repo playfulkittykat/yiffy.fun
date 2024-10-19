@@ -405,6 +405,10 @@ fn viewer(credentials: Signal<Credentials>, query: Signal<ActiveQuery>) -> Eleme
             let post_id = post.id;
             let clone = dislike_search_clone.clone();
             spawn_forever(async move {
+                clone.yiff.unfavorite(post_id).await.ok();
+            });
+            let clone = dislike_search_clone.clone();
+            spawn_forever(async move {
                 clone.yiff.vote_down(post_id).await.ok();
             });
         }
