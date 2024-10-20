@@ -133,15 +133,15 @@ pub(crate) fn app() -> Element {
     let entries = tag::Entries::new();
     match &*query.read_unchecked() {
         q if !q.active => rsx! {
-        tag::List {
-            entries,
-            yiff,
-            onsubmit: move |terms| {
-                let mut query = query.write();
-                query.terms = terms;
-                query.active = true;
+            tag::List {
+                entries,
+                yiff,
+                onsubmit: move |terms| {
+                    let mut query = query.write();
+                    query.terms = terms;
+                    query.active = true;
+                }
             }
-        }
             button {
                 tabindex: "-1",
                 onclick: move |_| {
@@ -197,27 +197,6 @@ fn notice() -> Element {
         }
     }
 }
-
-/*
-#[component]
-fn search(query: Signal<ActiveQuery>) -> Element {
-    rsx! {
-        form {
-            prevent_default: "onsubmit",
-            onsubmit: move |_| {
-                query.write().active = true;
-            },
-            input {
-                "type": "text",
-                value: "{query.peek().terms}",
-                placeholder: "tags...",
-                oninput: move |evt| query.write().terms = evt.value().clone()
-            }
-            button { "type": "submit", "Start" }
-        }
-    }
-}
-*/
 
 #[component]
 fn login(credentials: Signal<Credentials>) -> Element {

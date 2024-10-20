@@ -55,8 +55,7 @@ pub fn List(
         .map(|(id, _)| {
             let id = *id;
             let elem = rsx! {
-                Entry {
-                    key: "entry-{id}",
+                Entry {key: "entry-{id}",
                     id,
                     entries,
                     yiff,
@@ -64,7 +63,6 @@ pub fn List(
                         let mut entries = entries.write();
                         entries.get_mut(&id).unwrap().clear();
                         let rightmost = entries.keys().max().unwrap();
-
                         if id != *rightmost {
                             entries.remove(&id);
                         }
@@ -72,22 +70,19 @@ pub fn List(
                     onchange: move |e| {
                         let mut entries = entries.write();
                         *entries.get_mut(&id).unwrap() = e;
-
                         let mut rightmost = *entries.keys().max().unwrap();
                         if !entries[&rightmost].is_empty() {
                             rightmost = ID.fetch_add(1, Ordering::SeqCst);
                             entries.insert(rightmost, String::new());
                         }
-
-                        // XXX: Hack to focus the newly inserted text box.
                         spawn_forever(async move {
                             timers::cancelable(Duration::from_millis(100)).1.await.unwrap();
-                            eval(&format!(
-                                r#"document.getElementById("tag-edit-{rightmost}").focus();"#
-                            ))
-                            .join().await.unwrap();
+                            eval(&format!(r#"document.getElementById("tag-edit-{rightmost}").focus();"#))
+                                .join()
+                                .await
+                                .unwrap();
                         });
-                    },
+                    }
                 }
             };
             (id, elem)
@@ -96,17 +91,20 @@ pub fn List(
     children.sort_by_key(|(id, _)| *id);
 
     return rsx! {
-        { children.into_iter().map(|(_, e)| e) }
+        { children.into_iter().map(|(_, e)| e) },
         button {
             r#type: "button",
             onclick: move |_| {
-                let tags: Vec<_> = entries.peek().values().filter_map(|x| {
-                    match x.trim() {
-                        "" => None,
-                        x => Some(x.to_owned())
-                    }
-                }).collect();
-
+                let tags: Vec<_> = entries
+                    .peek()
+                    .values()
+                    .filter_map(|x| {
+                        match x.trim() {
+                            "" => None,
+                            x => Some(x.to_owned()),
+                        }
+                    })
+                    .collect();
                 if !tags.is_empty() {
                     onsubmit.call(tags);
                 }
@@ -128,19 +126,13 @@ fn Entry(
 
     rsx! {
         div {
-            Edit {
-                id,
-                yiff,
-                onremove,
-                onchange,
-                value,
-            }
+            Edit { id, yiff, onremove, onchange, value }
 
             Remove {
                 onremove: move |_| {
                     value.write().clear();
                     onremove.call(());
-                },
+                }
             }
         }
     }
@@ -235,15 +227,12 @@ fn Edit(
             value: "{value}",
             oninput,
             onchange: move |_| chosen(),
-            onblur: move |_| chosen(),
+            onblur: move |_| chosen()
         }
-        datalist {
-            id: "tag-edit-list-{id}",
+        datalist { id: "tag-edit-list-{id}",
 
             for suggestion in &*autocomplete_suggestions.read() {
-                option {
-                    "{suggestion}"
-                }
+                option { "{suggestion}" }
             }
         }
     }
