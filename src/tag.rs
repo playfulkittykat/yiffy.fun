@@ -167,7 +167,7 @@ fn Edit(
     id: usize,
 ) -> Element {
     let mut autocomplete_timer = use_signal(|| Option::<timers::Cancel>::None);
-    let mut autocomplete_suggestions = use_signal(|| Vec::<String>::new());
+    let mut autocomplete_suggestions = use_signal(Vec::<String>::new);
 
     let mut chosen = move || {
         use_future(move || {
