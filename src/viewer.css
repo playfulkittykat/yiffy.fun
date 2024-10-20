@@ -43,13 +43,27 @@ a {
 .exit-nav {
         position: absolute;
         top: 0;
+}
+
+.exit-nav.left {
         right: 0;
+}
+
+.exit-nav.right {
+        left: 0;
 }
 
 .side-nav {
         position: fixed;
-        left: 0;
         bottom: 10vh;
+}
+
+.side-nav.left {
+        left: 0;
+}
+
+.side-nav.right {
+        right: 0;
 }
 
 .exit-nav ul, .side-nav ul {
