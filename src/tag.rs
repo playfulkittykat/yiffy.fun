@@ -111,9 +111,7 @@ pub fn List(
                         }
                     })
                     .collect();
-                if !tags.is_empty() {
-                    onsubmit.call(tags);
-                }
+                onsubmit.call(tags);
             },
             "Show me the Yiff!"
         }
