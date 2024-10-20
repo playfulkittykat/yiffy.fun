@@ -1,0 +1,16 @@
+form.options {
+	margin-top: 2em;
+	margin-left: 2em;
+	margin-right: 2em;
+	width: calc(100% - 4em);
+}
+
+form.options fieldset {
+	display: flex;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+}
+
+form.options fieldset + fieldset {
+	margin-top: 1em;
+}

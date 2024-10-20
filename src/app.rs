@@ -20,6 +20,7 @@ use base64::engine::general_purpose::STANDARD;
 use base64::prelude::*;
 
 use bevy_pkv::PkvStore;
+use serde::{Deserialize, Serialize};
 
 use crate::tag;
 use crate::yiff::Yiff;
@@ -64,7 +65,30 @@ impl Search {
     }
 }
 
-#[derive(Props, Clone, Eq, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+fn store() -> PkvStore {
+    PkvStore::new_with_qualifier("fun", "yiffy", env!("CARGO_PKG_NAME"))
+}
+
+#[derive(Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+enum Hand {
+    #[default]
+    Left,
+    Right,
+}
+
+impl Hand {
+    async fn load() -> Self {
+        // TODO: Find a spawn_blocking replacement.
+        store().get("hand").unwrap_or_default()
+    }
+
+    async fn save(self) {
+        // TODO: Find a spawn_blocking replacement.
+        store().set("hand", &self).unwrap()
+    }
+}
+
+#[derive(Props, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 struct Credentials {
     username: String,
     api_key: String,
@@ -72,18 +96,14 @@ struct Credentials {
 }
 
 impl Credentials {
-    fn store() -> PkvStore {
-        PkvStore::new_with_qualifier("fun", "yiffy", env!("CARGO_PKG_NAME"))
-    }
-
     async fn load() -> Self {
         // TODO: Find a spawn_blocking replacement.
-        Self::store().get("credentials").unwrap_or_default()
+        store().get("credentials").unwrap_or_default()
     }
 
     async fn save(self) {
         // TODO: Find a spawn_blocking replacement.
-        Self::store().set("credentials", &self).unwrap()
+        store().set("credentials", &self).unwrap()
     }
 }
 
@@ -109,6 +129,12 @@ pub(crate) fn app() -> Element {
         .join()
     });
 
+    let hand = use_resource(Hand::load);
+    let hand = match *hand.read_unchecked() {
+        Some(a) => a,
+        None => return rsx! { "Loading hand..." },
+    };
+
     let credentials = use_resource(Credentials::load);
     let credentials = match &*credentials.read_unchecked() {
         Some(a) => a.clone(),
@@ -117,6 +143,7 @@ pub(crate) fn app() -> Element {
 
     let mut query = use_signal(ActiveQuery::default);
     let mut credentials_signal = use_signal(|| credentials.clone());
+    let mut hand_signal = use_signal(|| hand);
 
     if !credentials_signal.read().active {
         return rsx! {
@@ -130,6 +157,23 @@ pub(crate) fn app() -> Element {
         Yiff::new(BASE_URL, "pkk@tabby.rocks", &creds.username, &creds.api_key)
     });
 
+    let options_style = include_str!("options.css");
+    let set_hand = move |e: Event<FormData>| {
+        let mut signal = hand_signal.write();
+        let hand = match &*e.value() {
+            "left" => Hand::Left,
+            "right" => Hand::Right,
+            _ => unreachable!(),
+        };
+
+        if hand == *signal {
+            return;
+        }
+
+        *signal = hand;
+        spawn_forever(hand.save());
+    };
+
     let entries = tag::Entries::new();
     match &*query.read_unchecked() {
         q if !q.active => rsx! {
@@ -142,19 +186,48 @@ pub(crate) fn app() -> Element {
                     query.active = true;
                 }
             }
-            button {
-                style: "position: fixed; bottom: 1em; right: 1em;",
-                tabindex: "-1",
-                onclick: move |_| {
-                    *credentials_signal.write() = Default::default();
-                    spawn_forever(Credentials::default().save());
-                },
-                "Log Out"
+            style { "{options_style}" }
+            form { class: "options", action: "#", prevent_default: "onsubmit",
+                fieldset {
+                    legend { "In which hand is your phone?" }
+                    label {
+                        input {
+                            r#type: "radio",
+                            name: "hand",
+                            value: "left",
+                            oninput: set_hand,
+                            checked: *hand_signal.read() == Hand::Left
+                        }
+                        "Left"
+                    }
+                    label {
+                        input {
+                            r#type: "radio",
+                            name: "hand",
+                            value: "right",
+                            oninput: set_hand,
+                            checked: *hand_signal.read() == Hand::Right
+                        }
+                        "Right"
+                    }
+                }
+                fieldset {
+                    legend { "Want to disconnect your account?" }
+                    button {
+                        class: "log-out",
+                        tabindex: "-1",
+                        onclick: move |_| {
+                            *credentials_signal.write() = Default::default();
+                            spawn_forever(Credentials::default().save());
+                        },
+                        "Log Out"
+                    }
+                }
             }
             crate::app::notice {}
         },
         _ => rsx! {
-            crate::app::viewer { yiff, credentials: credentials_signal, query }
+            crate::app::viewer { yiff, credentials: credentials_signal, query, hand: hand_signal }
         },
     }
 }
@@ -264,6 +337,7 @@ fn viewer(
     yiff: ReadOnlySignal<Yiff>,
     credentials: Signal<Credentials>,
     query: Signal<ActiveQuery>,
+    hand: Signal<Hand>,
 ) -> Element {
     let search = use_resource(move || async move {
         let creds = credentials.read();
@@ -466,6 +540,10 @@ fn viewer(
         });
 
     let viewer_style = include_str!("viewer.css");
+    let hand_class = match *hand.read() {
+        Hand::Left => "left",
+        Hand::Right => "right",
+    };
     rsx! {
         style { "{viewer_style}" }
         link {
@@ -490,7 +568,7 @@ fn viewer(
             "autofocus": "true",
             style: "width: 100%; overflow-x: hidden;",
             div { id: "viewport", {viewer} }
-            nav { class: "side-nav",
+            nav { class: "side-nav {hand_class}",
                 ul {
                     li {
                         button {
@@ -535,7 +613,7 @@ fn viewer(
                 }
             }
 
-            nav { class: "exit-nav",
+            nav { class: "exit-nav {hand_class}",
                 ul {
                     li {
                         button {
