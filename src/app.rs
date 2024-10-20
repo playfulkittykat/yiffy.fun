@@ -192,7 +192,7 @@ fn notice() -> Element {
             style { "{notice_style}" }
             "Copyright {year}. "
             "Available under the terms of {license}. "
-            crate::app::ExternalLink { href: source, "Source available" }
+            crate::app::ExternalLink { href: source, "Source code" }
             "."
         }
     }
