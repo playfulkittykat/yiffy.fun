@@ -90,10 +90,16 @@ pub fn List(
         .collect::<Vec<_>>();
     children.sort_by_key(|(id, _)| *id);
 
+    let search_style = include_str!("tag.css");
     return rsx! {
-        { children.into_iter().map(|(_, e)| e) },
+        style { "{search_style}" }
+        div { class: "tag-list",
+            "Tags:"
+            { children.into_iter().map(|(_, e)| e) }
+        }
         button {
             r#type: "button",
+            class: "tag-submit",
             onclick: move |_| {
                 let tags: Vec<_> = entries
                     .peek()
@@ -109,7 +115,7 @@ pub fn List(
                     onsubmit.call(tags);
                 }
             },
-            "Start"
+            "Show me the Yiff!"
         }
     };
 }
@@ -125,7 +131,7 @@ fn Entry(
     let mut value = use_signal(|| entries.peek().get(&id).cloned().unwrap_or_default());
 
     rsx! {
-        div {
+        div { class: "tag-entry",
             Edit { id, yiff, onremove, onchange, value }
 
             Remove {
@@ -144,6 +150,8 @@ fn Remove(onremove: EventHandler) -> Element {
         button {
             onclick: move |_| onremove.call(()),
             r#type: "button",
+            class: "tag-remove",
+            title: "Remove",
             "aria-label": "Remove",
             "X"
         }
@@ -183,7 +191,10 @@ fn Edit(
         if let Some(cancel) = cancel.take() {
             cancel.cancel();
         }
-        value.set(e.value());
+        match value.try_write() {
+            Ok(mut v) => *v = e.value(),
+            Err(_) => return,
+        }
 
         let text = e.value();
         if text.len() < 3 {
@@ -223,6 +234,7 @@ fn Edit(
         input {
             r#type: "text",
             id: "tag-edit-{id}",
+            class: "tag-edit",
             list: "tag-edit-list-{id}",
             value: "{value}",
             oninput,

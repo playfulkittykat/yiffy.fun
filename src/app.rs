@@ -143,6 +143,7 @@ pub(crate) fn app() -> Element {
                 }
             }
             button {
+                style: "position: fixed; bottom: 1em; right: 1em;",
                 tabindex: "-1",
                 onclick: move |_| {
                     *credentials_signal.write() = Default::default();
