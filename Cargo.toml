@@ -17,7 +17,7 @@ include = [
 
 [features]
 default = [ "desktop" ]
-desktop = [ "dioxus/desktop", "dioxus-desktop", "reqwest/default-tls", "rs621/rate-limit", "tokio", "bevy_pkv/redb" ]
+desktop = [ "dioxus/desktop", "dioxus-desktop", "reqwest/default-tls", "tokio", "bevy_pkv/redb" ]
 web = [ "dioxus/web", "dioxus-web", "wasm-bindgen-futures", "gloo" ]
 
 [dependencies]
@@ -39,8 +39,9 @@ gloo = { optional = true, version = "0.11.0", default-features = false, features
 
 [dependencies.rs621]
 default-features = false
+features = ["rate-limit"]
 git = "https://github.com/playfulkittykat/rs621"
-rev = "ef20e183533f76c244f138fb9eadeffb5ae723a0"
+rev = "63baedc124cf788743907a95a1b9b3062219383d"
 
 [build-dependencies]
 vergen-gix = { version = "1.0.2", default-features = false }
