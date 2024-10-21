@@ -26,7 +26,7 @@ dioxus = { version = "0.5" }
 futures = "0.3.31"
 serde = { version = "1.0.210", features = [ "derive" ] }
 url = "2.5.2"
-reqwest = { optional = true, default-features = false, version = "0.11.13" }
+reqwest = { optional = true, default-features = false, version = "0.12.8" }
 wasm-bindgen-futures = { optional = true, version = "0.4.43" }
 tokio = { optional = true, version = "1", features = [ "rt", "time", "macros", "sync" ] }
 webbrowser = "1.0.2"
@@ -41,7 +41,7 @@ gloo = { optional = true, version = "0.11.0", default-features = false, features
 default-features = false
 features = ["rate-limit"]
 git = "https://github.com/playfulkittykat/rs621"
-rev = "63baedc124cf788743907a95a1b9b3062219383d"
+rev = "c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628"
 
 [build-dependencies]
 vergen-gix = { version = "1.0.2", default-features = false }
