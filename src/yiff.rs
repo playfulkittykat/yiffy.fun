@@ -145,7 +145,7 @@ impl Yiff {
         let query = tag::Query::new()
             .fuzzy_name_matches(needle)
             .order(tag::Order::Similarity)
-            .limit(30);
+            .per_page(30);
 
         let tags = self
             .client

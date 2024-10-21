@@ -4409,21 +4409,32 @@ dependencies = [
 [[package]]
 name = "rs621"
 version = "0.7.0-alpha1"
-source = "git+https://github.com/playfulkittykat/rs621?rev=ef20e183533f76c244f138fb9eadeffb5ae723a0#ef20e183533f76c244f138fb9eadeffb5ae723a0"
+source = "git+https://github.com/playfulkittykat/rs621?rev=63baedc124cf788743907a95a1b9b3062219383d#63baedc124cf788743907a95a1b9b3062219383d"
 dependencies = [
  "chrono",
  "derivative",
  "futures",
  "itertools",
  "reqwest 0.11.27",
+ "rs621-ratelimit",
  "serde",
  "serde_json",
  "serde_repr",
  "serde_with",
  "thiserror",
- "tokio",
  "url",
  "urlencoding 1.3.3",
+]
+
+[[package]]
+name = "rs621-ratelimit"
+version = "0.7.0-alpha1"
+source = "git+https://github.com/playfulkittykat/rs621?rev=63baedc124cf788743907a95a1b9b3062219383d#63baedc124cf788743907a95a1b9b3062219383d"
+dependencies = [
+ "futures",
+ "gloo-timers 0.3.0",
+ "tokio",
+ "web-time",
 ]
 
 [[package]]
@@ -5657,6 +5668,16 @@ name = "web-sys"
 version = "0.3.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26fdeaafd9bd129f65e7c031593c24d62186301e0c72c8978fa1678be7d532c0"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "web-time"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
