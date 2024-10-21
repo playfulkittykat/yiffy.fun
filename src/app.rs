@@ -43,7 +43,7 @@ const BASE_URL: &str = "https://e621.net";
 lazy_static::lazy_static! {
     static ref LOGO_E621: String = format!(
         "data:image/svg+xml;base64,{}",
-        STANDARD.encode(include_bytes!("e621.svg")),
+        STANDARD.encode(include_bytes!("assets/e621.svg")),
     );
 }
 
