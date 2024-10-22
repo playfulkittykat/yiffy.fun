@@ -189,10 +189,7 @@ fn Edit(
         if let Some(cancel) = cancel.take() {
             cancel.cancel();
         }
-        match value.try_write() {
-            Ok(mut v) => *v = e.value(),
-            Err(_) => return,
-        }
+        *value.write() = e.value();
 
         let text = e.value();
         if text.len() < 3 {
@@ -207,12 +204,13 @@ fn Edit(
                 return;
             }
 
-            let text = value.peek();
-            let (negate, text) = match text.trim_start().chars().next() {
+            let peeked = value.peek();
+            let (negate, text) = match peeked.trim_start().chars().next() {
                 None => return,
                 Some('-') => (true, text.trim_start()[1..].to_owned()),
                 Some(_) => (false, text.to_owned()),
             };
+            drop(peeked);
 
             match yiff.read().tags(text).await {
                 Err(e) => println!("{}", e),
