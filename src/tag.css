@@ -14,6 +14,7 @@
 	border: 1px solid #ccc;
 	background: #ccc;
 	white-space: nowrap;
+	height: 2em;
 }
 
 .tag-entry:focus-within {
@@ -26,7 +27,8 @@ input.tag-edit {
 	border: none !important;
 	outline: none !important;
 	border-radius: 0.5em 0 0 0.5em;
-	padding-left: 0.5em;
+	padding: 0 0 0 0.5em;
+	height: 100%;
 }
 
 button.tag-remove {
@@ -38,6 +40,8 @@ button.tag-remove {
 	width: 2em;
 	font-weight: bold;
 	border-radius: 0 0.5em 0.5em 0;
+	height: 100%;
+	padding: 0;
 }
 
 .tag-submit {
