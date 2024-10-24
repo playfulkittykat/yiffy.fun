@@ -47,6 +47,27 @@ lazy_static::lazy_static! {
     );
 }
 
+static ERRORS: GlobalSignal<Vec<String>> = GlobalSignal::new(Vec::new);
+
+trait ResultExt<O> {
+    fn record_err(self) -> Option<O>;
+}
+
+impl<O, E> ResultExt<O> for Result<O, E>
+where
+    E: ToString,
+{
+    fn record_err(self) -> Option<O> {
+        match self {
+            Ok(o) => Some(o),
+            Err(e) => {
+                ERRORS.write().push(e.to_string());
+                None
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Search {
     search: Arc<Mutex<crate::yiff::Search>>,
@@ -84,7 +105,7 @@ impl Hand {
 
     async fn save(self) {
         // TODO: Find a spawn_blocking replacement.
-        store().set("hand", &self).unwrap()
+        store().set("hand", &self).record_err();
     }
 }
 
@@ -103,7 +124,7 @@ impl Credentials {
 
     async fn save(self) {
         // TODO: Find a spawn_blocking replacement.
-        store().set("credentials", &self).unwrap()
+        store().set("credentials", &self).record_err();
     }
 }
 
@@ -174,6 +195,23 @@ pub(crate) fn app() -> Element {
         spawn_forever(hand.save());
     };
 
+    let errors = ERRORS.read();
+    let error_list = if errors.is_empty() {
+        None
+    } else {
+        rsx! {
+            fieldset {
+                legend { "What went wrong?" }
+
+                ul {
+                    for error in errors.iter() {
+                        li { "{error}" }
+                    }
+                }
+            }
+        }
+    };
+
     let entries = tag::Entries::new();
     match &*query.read_unchecked() {
         q if !q.active => rsx! {
@@ -223,6 +261,8 @@ pub(crate) fn app() -> Element {
                         "Log Out"
                     }
                 }
+
+                { error_list }
             }
             crate::app::notice {}
         },
@@ -444,10 +484,10 @@ fn viewer(
             let clone = fav_search_clone.clone();
             let clone2 = fav_search_clone.clone();
             spawn_forever(async move {
-                clone.yiff.vote_up(post_id).await.ok();
+                clone.yiff.vote_up(post_id).await.record_err();
             });
             spawn_forever(async move {
-                clone2.yiff.favorite(post_id).await.unwrap();
+                clone2.yiff.favorite(post_id).await.record_err();
             });
         }
         advance.restart()
@@ -461,7 +501,7 @@ fn viewer(
             let post_id = post.id;
             let clone = like_search_clone.clone();
             spawn_forever(async move {
-                clone.yiff.vote_up(post_id).await.ok();
+                clone.yiff.vote_up(post_id).await.record_err();
             });
         }
         advance.restart()
@@ -475,11 +515,11 @@ fn viewer(
             let post_id = post.id;
             let clone = dislike_search_clone.clone();
             spawn_forever(async move {
-                clone.yiff.unfavorite(post_id).await.ok();
+                clone.yiff.unfavorite(post_id).await.record_err();
             });
             let clone = dislike_search_clone.clone();
             spawn_forever(async move {
-                clone.yiff.vote_down(post_id).await.ok();
+                clone.yiff.vote_down(post_id).await.record_err();
             });
         }
         advance.restart()
