@@ -23,12 +23,23 @@ use futures::stream::StreamExt;
 use futures::{SinkExt, TryStreamExt};
 
 use rs621::client::Client;
-use rs621::error::Error;
 use rs621::post::{Post, Query, VoteDir, VoteMethod};
 use rs621::tag;
 
+use snafu::{Backtrace, ResultExt, Snafu};
+
 use std::collections::VecDeque;
 use std::sync::Arc;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("While trying to {action}, encountered: {source}"))]
+    Api {
+        source: rs621::error::Error,
+        action: String,
+        backtrace: Backtrace,
+    },
+}
 
 #[derive(Clone, Debug)]
 pub struct Yiff {
@@ -97,7 +108,9 @@ impl Yiff {
                             history.push_back(post.clone());
                             Some(Ok(post))
                         }
-                        Some(Err(e)) => Some(Err(e)),
+                        Some(Err(e)) => Some(Err(e).with_context(|_| ApiSnafu {
+                            action: format!("search page {index}"),
+                        })),
                         None => None,
                     },
                 };
@@ -120,11 +133,22 @@ impl Yiff {
     }
 
     pub async fn favorite(&self, post_id: u64) -> Result<(), Error> {
-        self.client.post_favorite(post_id).await.map(|_| ())
+        self.client
+            .post_favorite(post_id)
+            .await
+            .map(|_| ())
+            .with_context(|_| ApiSnafu {
+                action: format!("fav #{post_id}"),
+            })
     }
 
     pub async fn unfavorite(&self, post_id: u64) -> Result<(), Error> {
-        self.client.post_unfavorite(post_id).await
+        self.client
+            .post_unfavorite(post_id)
+            .await
+            .with_context(|_| ApiSnafu {
+                action: format!("unfav #{post_id})"),
+            })
     }
 
     pub async fn vote_up(&self, post_id: u64) -> Result<(), Error> {
@@ -132,6 +156,9 @@ impl Yiff {
             .post_vote(post_id, VoteMethod::Set, VoteDir::Up)
             .await
             .map(|_| ())
+            .with_context(|_| ApiSnafu {
+                action: format!("vote up #{post_id}"),
+            })
     }
 
     pub async fn vote_down(&self, post_id: u64) -> Result<(), Error> {
@@ -139,11 +166,14 @@ impl Yiff {
             .post_vote(post_id, VoteMethod::Set, VoteDir::Down)
             .await
             .map(|_| ())
+            .with_context(|_| ApiSnafu {
+                action: format!("vote down #{post_id}"),
+            })
     }
 
     pub async fn tags(&self, needle: String) -> Result<Vec<String>, Error> {
         let query = tag::Query::new()
-            .fuzzy_name_matches(needle)
+            .fuzzy_name_matches(needle.clone())
             .order(tag::Order::Similarity)
             .per_page(30);
 
@@ -153,7 +183,10 @@ impl Yiff {
             .take(30)
             .map_ok(|t| t.name)
             .try_collect::<Vec<_>>()
-            .await?;
+            .await
+            .with_context(move |_| ApiSnafu {
+                action: format!("find tags matching `{needle}`"),
+            })?;
 
         Ok(tags)
     }
