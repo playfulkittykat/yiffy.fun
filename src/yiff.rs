@@ -18,6 +18,7 @@
  */
 use crate::platform::spawn;
 
+use futures::channel::oneshot::Canceled;
 use futures::channel::{mpsc, oneshot};
 use futures::stream::StreamExt;
 use futures::{SinkExt, TryStreamExt};
@@ -26,7 +27,7 @@ use rs621::client::Client;
 use rs621::post::{Post, Query, VoteDir, VoteMethod};
 use rs621::tag;
 
-use snafu::{Backtrace, ResultExt, Snafu};
+use snafu::{Backtrace, IntoError, ResultExt, Snafu};
 
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -36,6 +37,12 @@ pub enum Error {
     #[snafu(display("While trying to {action}, encountered: {source}"))]
     Api {
         source: rs621::error::Error,
+        action: String,
+        backtrace: Backtrace,
+    },
+    #[snafu(display("While waiting for {action}, encountered: {source}"))]
+    NoReply {
+        source: Canceled,
         action: String,
         backtrace: Backtrace,
     },
@@ -218,7 +225,15 @@ impl Search {
             return None;
         }
 
-        receiver.await.expect("search ended before replying")
+        let err = match receiver.await {
+            Ok(r) => return r,
+            Err(e) => e,
+        };
+
+        Some(Err(NoReplySnafu {
+            action: "searching".to_owned(),
+        }
+        .into_error(err)))
     }
 
     pub async fn peek(&mut self) -> Result<Option<Arc<Post>>, Error> {
