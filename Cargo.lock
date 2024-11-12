@@ -4307,31 +4307,23 @@ dependencies = [
 [[package]]
 name = "rs621"
 version = "0.7.0-alpha1"
-source = "git+https://github.com/playfulkittykat/rs621?rev=c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628#c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628"
+source = "git+https://github.com/playfulkittykat/rs621?rev=de9be20c497f0412698c8d45598bb3cd00be6cb9#de9be20c497f0412698c8d45598bb3cd00be6cb9"
 dependencies = [
  "chrono",
  "derivative",
+ "either",
  "futures",
+ "gloo-timers 0.3.0",
  "itertools",
  "reqwest",
- "rs621-ratelimit",
  "serde",
  "serde_json",
  "serde_repr",
  "serde_with",
  "thiserror",
+ "tokio",
  "url",
  "urlencoding 1.3.3",
-]
-
-[[package]]
-name = "rs621-ratelimit"
-version = "0.7.0-alpha1"
-source = "git+https://github.com/playfulkittykat/rs621?rev=c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628#c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628"
-dependencies = [
- "futures",
- "gloo-timers 0.3.0",
- "tokio",
  "web-time",
 ]
 

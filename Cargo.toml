@@ -42,7 +42,7 @@ snafu = { version = "0.8.5", features = ["rust_1_81"] }
 default-features = false
 features = ["rate-limit"]
 git = "https://github.com/playfulkittykat/rs621"
-rev = "c9a4a4fba8f1a3f255ad965bb22a0e4db0c4f628"
+rev = "de9be20c497f0412698c8d45598bb3cd00be6cb9"
 
 [build-dependencies]
 vergen-gix = { version = "1.0.2", default-features = false }
