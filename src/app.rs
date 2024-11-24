@@ -514,9 +514,11 @@ fn viewer(
         if let Some(post) = &*current.read() {
             let post_id = post.id;
             let clone = dislike_search_clone.clone();
-            spawn_forever(async move {
-                clone.yiff.unfavorite(post_id).await.record_err();
-            });
+            if post.is_favorited {
+                spawn_forever(async move {
+                    clone.yiff.unfavorite(post_id).await.record_err();
+                });
+            }
             let clone = dislike_search_clone.clone();
             spawn_forever(async move {
                 clone.yiff.vote_down(post_id).await.record_err();
