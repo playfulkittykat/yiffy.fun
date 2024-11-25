@@ -215,11 +215,12 @@ fn Edit(
             match yiff.read().tags(text).await {
                 Err(e) => println!("{}", e),
                 Ok(tags) => {
-                    let mut suggestions = autocomplete_suggestions.write();
-                    if negate {
-                        *suggestions = tags.into_iter().map(|x| format!("-{}", x)).collect();
-                    } else {
-                        *suggestions = tags;
+                    if let Ok(mut suggestions) = autocomplete_suggestions.try_write() {
+                        if negate {
+                            *suggestions = tags.into_iter().map(|x| format!("-{}", x)).collect();
+                        } else {
+                            *suggestions = tags;
+                        }
                     }
                 }
             }

@@ -132,6 +132,7 @@ impl Credentials {
 struct ActiveQuery {
     terms: Vec<String>,
     active: bool,
+    message: Option<String>,
 }
 
 pub(crate) fn app() -> Element {
@@ -222,9 +223,13 @@ pub(crate) fn app() -> Element {
                     let mut query = query.write();
                     query.terms = terms;
                     query.active = true;
+                    query.message = None;
                 }
             }
             style { "{options_style}" }
+            if let Some(ref msg) = q.message {
+                div { class: "message", "{ msg }" }
+            }
             form { class: "options", action: "#", prevent_default: "onsubmit",
                 fieldset {
                     legend { "In which hand is your phone?" }
@@ -415,14 +420,18 @@ fn viewer(
             let mut guard = search_clone.lock().await;
             let reply = guard.next().await;
 
-            let post = match reply {
-                Err(_) => None,   // TODO
-                Ok(None) => None, // TODO
-                Ok(Some(p)) => Some(p),
-            };
+            let post = reply.record_err().flatten();
+            let has_post = post.is_some();
 
             *current.write() = post;
             *disabled.write() = false;
+
+            if !has_post {
+                let mut write = query.write();
+                write.active = false;
+                write.message = Some("No more posts loaded.".to_owned());
+                return;
+            }
 
             if let Ok(Some(p)) = guard.peek().await {
                 if let Some(href) = &p.file.url {
