@@ -14,3 +14,8 @@ form.options fieldset {
 form.options fieldset + fieldset {
 	margin-top: 1em;
 }
+
+.message {
+	text-align: center;
+	color: red;
+}
